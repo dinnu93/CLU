@@ -1,3 +1,5 @@
+-- wc command in linux
+
 import System.Environment
 import qualified Data.ByteString as B 
 import qualified Data.List as L
