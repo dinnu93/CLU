@@ -1,10 +1,14 @@
+module Lib
+    ( wcMain
+    ) where
+
 -- wc command in linux
 
 import System.Environment
 import qualified Data.ByteString as B 
 import qualified Data.List as L
 
-main = do
+wcMain = do
   args <- getArgs
   file <- readFile $ last args
   byteFile <- B.readFile $ last args
@@ -45,3 +49,4 @@ byteCount = B.length
 
 maxLineLength :: String -> Int
 maxLineLength = maximum . (map charCount) . lines
+
