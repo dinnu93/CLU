@@ -28,7 +28,8 @@ argsDispatch args dirList
 optionsDispatch :: Option -> [String] -> String
 optionsDispatch o
   | o == "-a" || o == "--all" = showDirCloumns . dirSort  
-
+  | o == "-A" || o == "--almost-all" = showDirCloumns . drop 2 . dirSort
+  
 -- dirSort :: sorts the files and directories in alphabetical order
 dirSort :: [String] -> [String]
 dirSort = L.sortBy (\x y -> (map C.toLower (rmDot x)) `compare` (map C.toLower (rmDot y)))
@@ -43,7 +44,6 @@ rmDot s
 -- with a dot
 rmDotFiles :: [String] -> [String] 
 rmDotFiles = filter (\x -> not (head x == '.'))
-
 
 -- showDirCloumns :: displays all the files and directories in columns  
 showDirCloumns :: [String] -> String
