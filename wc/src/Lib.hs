@@ -17,6 +17,36 @@ wcMain = do
 
 type Args = [String]
 type Option = String 
+type FileName = String 
+
+data OptionList = OptionList {optionList :: [Option], optionCount :: Int} deriving (Show)
+data FileNameList = FileNameList {fileNameList :: [FileName], fileCount :: Int} deriving (Show)
+  
+data ArgList = ArgList OptionList FileNameList deriving (Show) 
+
+-- Parse the arguments and convert it into a well sorted out ArgList data type
+argsParser :: Args -> ArgList
+argsParser ls =  ArgList (OptionList optionList (length optionList)) (FileNameList fileNameList (length fileNameList))
+  where optionList = filterOptions ls
+        fileNameList = filterFileNames ls
+
+--checks if the given string is an option or not
+optionCheck :: String -> Bool
+optionCheck = L.isPrefixOf "-"
+
+--sort options according to the wc's order of option hierarchy and remove
+--duplicates
+sortOptions :: [Option] -> [Option]
+sortOptions = L.intersect ["-l","-w","-c","-m","-L"] . L.nub
+
+-- filter options from the list of arguments, remove duplicates and sort them
+-- according to wc option hierarchy order
+filterOptions :: Args -> [Option]
+filterOptions = sortOptions . filter optionCheck
+
+-- filter file names from the args list 
+filterFileNames :: Args -> [FileName]
+filterFileNames = filter (not . optionCheck)
 
 argsDispatch :: Args -> String -> B.ByteString -> String
 argsDispatch args file byteFile
