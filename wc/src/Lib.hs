@@ -10,19 +10,48 @@ import qualified Data.List as L
 
 wcMain = do
   args <- getArgs
-  file <- readFile $ last args
-  byteFile <- B.readFile $ last args
-  putStrLn $ argsDispatch args file byteFile
+  let argList = argsParser args 
+  let fileNames = listFileNames argList
+  let options = listOptions argList
+  fileStrings <- sequence . map readFile $ fileNames
+  fileByteStrings <- sequence . map B.readFile $ fileNames
+  let fileList = zipWith3 File fileNames fileStrings fileByteStrings
+  let actionList = ActionList options (FileList fileList (length fileList))
+        
+  putStr "Hello"
+  -- file <- readFile $ last args
+  -- byteFile <- B.readFile $ last args
+  -- putStrLn $ argsDispatch args file byteFile
 
 
 type Args = [String]
 type Option = String 
-type FileName = String 
+type FileName = FilePath 
 
 data OptionList = OptionList {optionList :: [Option], optionCount :: Int} deriving (Show)
-data FileNameList = FileNameList {fileNameList :: [FileName], fileCount :: Int} deriving (Show)
+data FileNameList = FileNameList {fileNameList :: [FileName], fileNameCount :: Int} deriving (Show)
   
 data ArgList = ArgList OptionList FileNameList deriving (Show) 
+
+type FileString = String
+type FileByteString = B.ByteString
+
+data File = File {fileName :: FileName,
+                  fileString :: FileString,
+                  fileByteString :: FileByteString} deriving (Show)
+
+data FileList = FileList {fileList :: [File],
+                          fileCount :: Int} deriving (Show)
+
+data ActionList = ActionList OptionList FileList deriving (Show)
+
+--gives the list of filenames from an ArgList
+listFileNames :: ArgList -> [FileName]
+listFileNames (ArgList _ fNameList) = fileNameList fNameList
+
+--gives the list of options with the option count 
+listOptions :: ArgList -> OptionList
+listOptions (ArgList opList _) = opList
 
 -- Parse the arguments and convert it into a well sorted out ArgList data type
 argsParser :: Args -> ArgList
@@ -37,7 +66,7 @@ optionCheck = L.isPrefixOf "-"
 --sort options according to the wc's order of option hierarchy and remove
 --duplicates
 sortOptions :: [Option] -> [Option]
-sortOptions = L.intersect ["-l","-w","-c","-m","-L"] . L.nub
+sortOptions = L.intersect ["-l","--lines","-w","--words","-c","--bytes","-m","--chars","-L","--max-line-length"] . L.nub
 
 -- filter options from the list of arguments, remove duplicates and sort them
 -- according to wc option hierarchy order
