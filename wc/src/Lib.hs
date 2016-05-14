@@ -77,21 +77,22 @@ filterOptions = sortOptions . filter optionCheck
 filterFileNames :: Args -> [FileName]
 filterFileNames = filter (not . optionCheck)
 
-argsDispatch :: Args -> String -> B.ByteString -> String
-argsDispatch args file byteFile
-  | length args == 1 = L.intercalate " " [(show . lineCount) file, (show . wordCount) file, (show . byteCount) byteFile, fileName]
-  | option == "-c" || option == "--bytes" = L.intercalate " " [(show . byteCount) byteFile, fileName]
-  | length args == 2 = L.intercalate " " [(show . (optionDispatch option)) file, fileName]
-  | otherwise = error "More arguments than required!"
-  where fileName = last args
-        option = args !! 0
+-- argsDispatch :: Args -> String -> B.ByteString -> String
+-- argsDispatch args file byteFile
+--   | length args == 1 = L.intercalate " " [(show . lineCount) file, (show . wordCount) file, (show . byteCount) byteFile, fileName]
+--   | option == "-c" || option == "--bytes" = L.intercalate " " [(show . byteCount) byteFile, fileName]
+--   | length args == 2 = L.intercalate " " [(show . (optionDispatch option)) file, fileName]
+--   | otherwise = error "More arguments than required!"
+--   where fileName = last args
+--         option = args !! 0
           
-optionDispatch :: Option -> String -> Int
-optionDispatch c 
-  | c == "-m" || c == "--chars" = charCount 
-  | c == "-l" || c == "--lines" = lineCount 
-  | c == "-L" || c == "--max-line-length" = maxLineLength 
-  | c == "-w" || c == "--words" = wordCount 
+optionDispatch :: Option -> File -> Int
+optionDispatch o (File _ fString fByteString)
+  | o == "-c" || o == "--bytes" = byteCount fByteString
+  | o == "-m" || o == "--chars" = charCount fString
+  | o == "-l" || o == "--lines" = lineCount fString
+  | o == "-L" || o == "--max-line-length" = maxLineLength fString 
+  | o == "-w" || o == "--words" = wordCount fString
   | otherwise = error "Not a valid option"
     
 lineCount :: String -> Int
