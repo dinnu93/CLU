@@ -72,11 +72,16 @@ listFileNames (ArgList _ fNameList) = fileNameList fNameList
 listOptions :: ArgList -> OptionList
 listOptions (ArgList opList _) = opList
 
+-- Parser for converting the real world data to internally defined data structures
+
 -- Parse the arguments and convert it into a well sorted out ArgList data type
 argsParser :: Args -> ArgList
 argsParser ls =  ArgList (OptionList optionList (length optionList)) (FileNameList fileNameList (length fileNameList))
   where optionList = filterOptions ls
         fileNameList = filterFileNames ls
+
+
+-- Predicates for an Option
 
 validOptions = ["-l","--lines","-w","--words","-c","--bytes","-m","--chars","-L","--max-line-length"]
 
@@ -93,6 +98,8 @@ optionCheck o
 sortOptions :: [Option] -> [Option]
 sortOptions = L.intersect validOptions . L.nub
 
+-- Filters for Options and FileNames 
+
 -- filter options from the list of arguments, remove duplicates and sort them
 -- according to wc option hierarchy order
 filterOptions :: Args -> [Option]
@@ -101,7 +108,10 @@ filterOptions = sortOptions . filter optionCheck
 -- filter file names from the args list 
 filterFileNames :: Args -> [FileName]
 filterFileNames = filter (not . optionCheck)
-          
+
+-- Dispatch System
+
+-- Takes a File and an Option and applies the relevant function to that file and gives the result   
 optionDispatch :: File -> Option -> Int
 optionDispatch (File _ fString fByteString _) o
   | o == "-c" || o == "--bytes" = byteCount fByteString
@@ -111,6 +121,7 @@ optionDispatch (File _ fString fByteString _) o
   | o == "-w" || o == "--words" = wordCount fString
   | otherwise = error "Not a valid option"
 
+-- Result Part
 
 --Takes a File and an OptionList and gives the FileResult
 getFileResult :: OptionList -> File -> FileResult
