@@ -5,7 +5,9 @@ module Lib
 -- wc command in linux
 
 import System.Environment
-import qualified Data.ByteString as B 
+import qualified System.Directory as D
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as Char8  
 import qualified Data.List as L
 
 wcMain = do
@@ -13,9 +15,10 @@ wcMain = do
   let argList = argsParser args 
   let fileNames = listFileNames argList
   let options = listOptions argList
-  fileStrings <- sequence . map readFile $ fileNames
-  fileByteStrings <- sequence . map B.readFile $ fileNames
-  let fileList = zipWith3 File fileNames fileStrings fileByteStrings
+  fileExists <- sequence . map D.doesFileExist $ fileNames 
+  fileStrings <- sequence $ zipWith (\fExists fName -> if fExists then (readFile fName) else return "") fileExists fileNames
+  fileByteStrings <- sequence $ zipWith (\fExists fName -> if fExists then B.readFile fName else return $ Char8.pack "") fileExists fileNames
+  let fileList = zipWith4 File fileNames fileStrings fileByteStrings fileExists
   let actionList = ActionList options (FileList fileList (length fileList))
   let filesResultList = getFilesResultList actionList
   putStrLn $ displayFilesResultList filesResultList
@@ -36,7 +39,8 @@ type FileByteString = B.ByteString
 
 data File = File {fileName :: FileName,
                   fileString :: FileString,
-                  fileByteString :: FileByteString} deriving (Show)
+                  fileByteString :: FileByteString,
+                  exists :: Bool } deriving (Show)
 
 data FileList = FileList {fileList :: [File],
                           fileCount :: Int} deriving (Show)
@@ -44,12 +48,21 @@ data FileList = FileList {fileList :: [File],
 data ActionList = ActionList OptionList FileList deriving (Show)
 
 data FileResult = FileResult {fileResultName :: FileName,
-                              fileResultList :: [Int]} deriving (Show)
+                              fileResultList :: [Int],
+                              fileExists :: Bool} deriving (Show)
 
 data TotalResult = TotalResult [Int] deriving (Show)
 data FilesResultList = FilesResultList [FileResult] TotalResult deriving (Show)
 
 -- End of Data Definitons
+
+-- takes a string and gives empty IO String
+zipWith4 :: (a -> b -> c -> d -> e) -> [a] -> [b] -> [c] -> [d] -> [e]
+zipWith4 f [] _ _ _ = []
+zipWith4 f _ [] _ _ = []
+zipWith4 f _ _ [] _ = []
+zipWith4 f _ _ _ [] = []
+zipWith4 f (a:as) (b:bs) (c:cs) (d:ds) = f a b c d : zipWith4 f as bs cs ds 
 
 --gives the list of filenames from an ArgList
 listFileNames :: ArgList -> [FileName]
@@ -90,7 +103,7 @@ filterFileNames :: Args -> [FileName]
 filterFileNames = filter (not . optionCheck)
           
 optionDispatch :: File -> Option -> Int
-optionDispatch (File _ fString fByteString) o
+optionDispatch (File _ fString fByteString _) o
   | o == "-c" || o == "--bytes" = byteCount fByteString
   | o == "-m" || o == "--chars" = charCount fString
   | o == "-l" || o == "--lines" = lineCount fString
@@ -103,7 +116,7 @@ optionDispatch (File _ fString fByteString) o
 getFileResult :: OptionList -> File -> FileResult
 getFileResult opList f
   | opCount == 0 = getFileResult defaultOpList f
-  | otherwise = FileResult (fileName f) $ map (optionDispatch f) (optionList opList)
+  | otherwise = FileResult (fileName f) (map (optionDispatch f) (optionList opList)) (exists f)
   where opCount = optionCount opList
         defaultOpList = OptionList ["-l","-w","-c"] 3
 
@@ -120,7 +133,9 @@ getFilesResultList (ActionList opList fl) = FilesResultList fResultList (TotalRe
 
 -- Display one File Result 
 displayFileResultList :: FileResult -> String
-displayFileResultList fResult = L.intercalate " " displayList
+displayFileResultList fResult
+  | fileExists fResult = L.intercalate " " displayList
+  | otherwise = "wc-exe: " ++ (fileResultName fResult) ++ ": No such file"
   where displayList = map show (fileResultList fResult) ++ [fileResultName fResult]
 
 -- Display Total Result
