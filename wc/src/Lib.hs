@@ -70,8 +70,10 @@ validOptions = ["-l","--lines","-w","--words","-c","--bytes","-m","--chars","-L"
 --checks if the given string is an option or not
 optionCheck :: String -> Bool
 optionCheck o
-  | elem o validOptions = True
-  | otherwise = error $ "wc : Invalid Option " ++ o
+  | hyphenCheck && elem o validOptions = True
+  | hyphenCheck = error $ "Invalid Option " ++ o
+  | otherwise = False
+  where hyphenCheck = L.isPrefixOf "-" o
 
 --sort options according to the wc's order of option hierarchy and remove
 --duplicates
