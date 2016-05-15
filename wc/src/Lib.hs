@@ -65,14 +65,18 @@ argsParser ls =  ArgList (OptionList optionList (length optionList)) (FileNameLi
   where optionList = filterOptions ls
         fileNameList = filterFileNames ls
 
+validOptions = ["-l","--lines","-w","--words","-c","--bytes","-m","--chars","-L","--max-line-length"]
+
 --checks if the given string is an option or not
 optionCheck :: String -> Bool
-optionCheck = L.isPrefixOf "-"
+optionCheck o
+  | elem o validOptions = True
+  | otherwise = error $ "wc : Invalid Option " ++ o
 
 --sort options according to the wc's order of option hierarchy and remove
 --duplicates
 sortOptions :: [Option] -> [Option]
-sortOptions = L.intersect ["-l","--lines","-w","--words","-c","--bytes","-m","--chars","-L","--max-line-length"] . L.nub
+sortOptions = L.intersect validOptions . L.nub
 
 -- filter options from the list of arguments, remove duplicates and sort them
 -- according to wc option hierarchy order
