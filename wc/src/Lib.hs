@@ -102,8 +102,8 @@ getFileResult opList f
         defaultOpList = OptionList ["-l","-w","-c"] 3
 
 -- Takes the ActionList and gives the result of all options on each file and gives a FileResultList 
-getFileResultList :: ActionList -> FilesResultList
-getFileResultList (ActionList opList fl) = FilesResultList fResultList (TotalResult tResultList)
+getFilesResultList :: ActionList -> FilesResultList
+getFilesResultList (ActionList opList fl) = FilesResultList fResultList (TotalResult tResultList)
   where fList = fileList fl 
         fResultList = map (getFileResult opList) fList
         tResultList = foldl (zipWith (+)) (replicate (optionCount opList) 0) $ map fileResultList fResultList 
