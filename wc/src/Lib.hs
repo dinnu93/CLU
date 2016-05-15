@@ -17,12 +17,10 @@ wcMain = do
   fileByteStrings <- sequence . map B.readFile $ fileNames
   let fileList = zipWith3 File fileNames fileStrings fileByteStrings
   let actionList = ActionList options (FileList fileList (length fileList))
-  
-  putStr "Hello"
-  -- file <- readFile $ last args
-  -- byteFile <- B.readFile $ last args
-  -- putStrLn $ argsDispatch args file byteFile
+  let filesResultList = getFilesResultList actionList
+  putStrLn $ displayFilesResultList filesResultList
 
+-- All the Data Definitions
 
 type Args = [String]
 type Option = String 
@@ -46,10 +44,12 @@ data FileList = FileList {fileList :: [File],
 data ActionList = ActionList OptionList FileList deriving (Show)
 
 data FileResult = FileResult {fileResultName :: FileName,
-                              fileResultList :: [Int]}
+                              fileResultList :: [Int]} deriving (Show)
 
-data TotalResult = TotalResult [Int]
-data FilesResultList = FilesResultList [FileResult] TotalResult
+data TotalResult = TotalResult [Int] deriving (Show)
+data FilesResultList = FilesResultList [FileResult] TotalResult deriving (Show)
+
+-- End of Data Definitons
 
 --gives the list of filenames from an ArgList
 listFileNames :: ArgList -> [FileName]
@@ -104,11 +104,34 @@ getFileResult opList f
 -- Takes the ActionList and gives the result of all options on each file and gives a FileResultList 
 getFilesResultList :: ActionList -> FilesResultList
 getFilesResultList (ActionList opList fl) = FilesResultList fResultList (TotalResult tResultList)
-  where fList = fileList fl 
+  where fList = fileList fl
+        opCount =  (optionCount opList)
+        updatedOpCount = if opCount == 0 then 3 else opCount
         fResultList = map (getFileResult opList) fList
-        tResultList = foldl (zipWith (+)) (replicate (optionCount opList) 0) $ map fileResultList fResultList 
+        tResultList = foldl (zipWith (+)) (replicate updatedOpCount 0) . map fileResultList $ fResultList 
 
+-- Displaying the resultant file Result Lists and total Result List into string formats
 
+-- Display one File Result 
+displayFileResultList :: FileResult -> String
+displayFileResultList fResult = L.intercalate " " displayList
+  where displayList = map show (fileResultList fResult) ++ [fileResultName fResult]
+
+-- Display Total Result
+displayTotalResult :: TotalResult -> String
+displayTotalResult (TotalResult tResultList) = L.intercalate " " displayList 
+  where displayList = map show tResultList ++ ["total"]
+          
+-- Display the Total Files Result List
+displayFilesResultList :: FilesResultList -> String
+displayFilesResultList (FilesResultList fResultList totalResult)
+  | fCount == 1 = fileResultDisplay
+  | otherwise = fileResultDisplay ++ "\n" ++ totalResultDisplay
+  where fCount = length fResultList
+        fileResultDisplayList = map displayFileResultList fResultList
+        fileResultDisplay = L.intercalate "\n" fileResultDisplayList
+        totalResultDisplay = displayTotalResult totalResult
+        
 -- Individual functional units for each option
 
 lineCount :: String -> Int
