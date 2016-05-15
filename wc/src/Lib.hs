@@ -49,7 +49,7 @@ data FileResult = FileResult {fileResultName :: FileName,
                               fileResultList :: [Int]}
 
 data TotalResult = TotalResult [Int]
-data FileResultList = FileResultList [FileResult] TotalResult
+data FilesResultList = FilesResultList [FileResult] TotalResult
 
 --gives the list of filenames from an ArgList
 listFileNames :: ArgList -> [FileName]
@@ -94,18 +94,21 @@ optionDispatch (File _ fString fByteString) o
 
 
 --Takes a File and an OptionList and gives the FileResult
-getFileResult :: File -> OptionList -> FileResult
-getFileResult f opList
-  | opCount == 0 = getFileResult f defaultOpList
+getFileResult :: OptionList -> File -> FileResult
+getFileResult opList f
+  | opCount == 0 = getFileResult defaultOpList f
   | otherwise = FileResult (fileName f) $ map (optionDispatch f) (optionList opList)
   where opCount = optionCount opList
         defaultOpList = OptionList ["-l","-w","-c"] 3
 
 -- Takes the ActionList and gives the result of all options on each file and gives a FileResultList 
--- getFileResultList :: ActionList -> FileResultList
--- getFileResult actionList = 
+getFileResultList :: ActionList -> FilesResultList
+getFileResultList (ActionList opList fl) = FilesResultList fResultList (TotalResult tResultList)
+  where fList = fileList fl 
+        fResultList = map (getFileResult opList) fList
+        tResultList = foldl (zipWith (+)) (replicate (optionCount opList) 0) $ map fileResultList fResultList 
 
-    
+
 -- Individual functional units for each option
 
 lineCount :: String -> Int
