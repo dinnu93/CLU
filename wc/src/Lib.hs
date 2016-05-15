@@ -17,7 +17,7 @@ wcMain = do
   fileByteStrings <- sequence . map B.readFile $ fileNames
   let fileList = zipWith3 File fileNames fileStrings fileByteStrings
   let actionList = ActionList options (FileList fileList (length fileList))
-        
+  
   putStr "Hello"
   -- file <- readFile $ last args
   -- byteFile <- B.readFile $ last args
@@ -44,6 +44,12 @@ data FileList = FileList {fileList :: [File],
                           fileCount :: Int} deriving (Show)
 
 data ActionList = ActionList OptionList FileList deriving (Show)
+
+data FileResult = FileResult {fileResultName :: FileName,
+                              fileResultList :: [Int]}
+
+data TotalResult = TotalResult [Int]
+data FileResultList = FileResultList [FileResult] TotalResult
 
 --gives the list of filenames from an ArgList
 listFileNames :: ArgList -> [FileName]
@@ -76,25 +82,32 @@ filterOptions = sortOptions . filter optionCheck
 -- filter file names from the args list 
 filterFileNames :: Args -> [FileName]
 filterFileNames = filter (not . optionCheck)
-
--- argsDispatch :: Args -> String -> B.ByteString -> String
--- argsDispatch args file byteFile
---   | length args == 1 = L.intercalate " " [(show . lineCount) file, (show . wordCount) file, (show . byteCount) byteFile, fileName]
---   | option == "-c" || option == "--bytes" = L.intercalate " " [(show . byteCount) byteFile, fileName]
---   | length args == 2 = L.intercalate " " [(show . (optionDispatch option)) file, fileName]
---   | otherwise = error "More arguments than required!"
---   where fileName = last args
---         option = args !! 0
           
-optionDispatch :: Option -> File -> Int
-optionDispatch o (File _ fString fByteString)
+optionDispatch :: File -> Option -> Int
+optionDispatch (File _ fString fByteString) o
   | o == "-c" || o == "--bytes" = byteCount fByteString
   | o == "-m" || o == "--chars" = charCount fString
   | o == "-l" || o == "--lines" = lineCount fString
   | o == "-L" || o == "--max-line-length" = maxLineLength fString 
   | o == "-w" || o == "--words" = wordCount fString
   | otherwise = error "Not a valid option"
+
+
+--Takes a File and an OptionList and gives the FileResult
+getFileResult :: File -> OptionList -> FileResult
+getFileResult f opList
+  | opCount == 0 = getFileResult f defaultOpList
+  | otherwise = FileResult (fileName f) $ map (optionDispatch f) (optionList opList)
+  where opCount = optionCount opList
+        defaultOpList = OptionList ["-l","-w","-c"] 3
+
+-- Takes the ActionList and gives the result of all options on each file and gives a FileResultList 
+-- getFileResultList :: ActionList -> FileResultList
+-- getFileResult actionList = 
+
     
+-- Individual functional units for each option
+
 lineCount :: String -> Int
 lineCount = length . lines
 
