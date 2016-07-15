@@ -18,7 +18,7 @@ wcMain = do
   fileExists <- sequence . map D.doesFileExist $ fileNames 
   fileStrings <- sequence $ zipWith (\fExists fName -> if fExists then (readFile fName) else return "") fileExists fileNames
   fileByteStrings <- sequence $ zipWith (\fExists fName -> if fExists then B.readFile fName else return $ Char8.pack "") fileExists fileNames
-  let fileList = zipWith4 File fileNames fileStrings fileByteStrings fileExists
+  let fileList = L.zipWith4 File fileNames fileStrings fileByteStrings fileExists
   let actionList = ActionList options (FileList fileList (length fileList))
   let filesResultList = getFilesResultList actionList
   putStrLn $ displayFilesResultList filesResultList
@@ -54,15 +54,7 @@ data FileResult = FileResult {fileResultName :: FileName,
 data TotalResult = TotalResult [Int] deriving (Show)
 data FilesResultList = FilesResultList [FileResult] TotalResult deriving (Show)
 
--- End of Data Definitons
-
--- takes a string and gives empty IO String
-zipWith4 :: (a -> b -> c -> d -> e) -> [a] -> [b] -> [c] -> [d] -> [e]
-zipWith4 f [] _ _ _ = []
-zipWith4 f _ [] _ _ = []
-zipWith4 f _ _ [] _ = []
-zipWith4 f _ _ _ [] = []
-zipWith4 f (a:as) (b:bs) (c:cs) (d:ds) = f a b c d : zipWith4 f as bs cs ds 
+-- End of Data Definiton
 
 --gives the list of filenames from an ArgList
 listFileNames :: ArgList -> [FileName]
